@@ -1,0 +1,149 @@
+---
+title: "¿Difieren las especies de pingüinos en su tamaño corporal?"
+subtitle: "Análisis visual y estadístico con el dataset Palmer Penguins"
+author: "Tu nombre aquí"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    code-fold: false
+    theme: cosmo
+    self-contained: true
+editor: source
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(easystats)
+options(scipen = 999)
+```
+
+## Introducción
+
+En este reporte analizamos si las tres especies de pingüinos del dataset
+**Palmer Penguins** (Adelie, Chinstrap y Gentoo) difieren en su **masa
+corporal**. Los datos fueron recogidos en las islas Palmer (Antártida) por
+la Dra. Kristen Gorman y publicados por el paquete `palmerpenguins`.
+
+**Pregunta de investigación:** ¿Existen diferencias en la masa corporal
+entre las tres especies de pingüinos?
+
+**Hipótesis:** esperamos encontrar diferencias, ya que las especies tienen
+tamaños corporales distintos conocidos en la literatura.
+
+## Importar y limpiar los datos
+
+```{r}
+#| label: import
+# cargar los datos
+penguins <- read_csv("data/raw_data/penguins_sample.csv")
+
+# eliminar filas con NA en las variables de interés
+penguins_clean <- penguins |>
+  # TU CÓDIGO AQUÍ
+  # Pista: usa drop_na(body_mass_g, species) o filter(!is.na(...))
+```
+
+## Estadísticos descriptivos
+
+```{r}
+#| label: descriptivos
+# media y desviación típica de body_mass_g por especie
+# Pista: group_by(species) |> summarise(...)
+# TU CÓDIGO AQUÍ
+```
+
+## Visualización
+
+### Distribución de la masa corporal
+
+```{r}
+#| label: fig-histogram
+#| fig-cap: "Distribución de la masa corporal (gramos) de los pingüinos."
+#| fig-width: 8
+#| fig-height: 4.5
+
+# Crea un histograma de body_mass_g
+# TU CÓDIGO AQUÍ
+```
+
+### Comparación entre especies (boxplot)
+
+```{r}
+#| label: fig-boxplot
+#| fig-cap: "Masa corporal por especie."
+#| fig-width: 8
+#| fig-height: 4.5
+
+# Crea un boxplot de body_mass_g por especie, con relleno (fill) por especie
+# TU CÓDIGO AQUÍ
+```
+
+### Relación entre aleta y masa
+
+```{r}
+#| label: fig-scatter
+#| fig-cap: "Relación entre longitud de aleta y masa corporal, por especie."
+#| fig-width: 8
+#| fig-height: 4.5
+
+# Crea un scatter plot de flipper_length_mm vs. body_mass_g,
+# coloreado por especie, con geom_smooth(method = "lm")
+# TU CÓDIGO AQUÍ
+```
+
+## Modelo estadístico
+
+Para comparar la masa corporal media entre las tres especies usamos una
+**ANOVA de una vía** (one-way ANOVA), ya que tenemos más de dos grupos.
+
+```{r}
+#| label: anova
+# ajustar el modelo
+modelo <- aov(
+  # TU CÓDIGO AQUÍ
+)
+
+# resumen del modelo
+summary(modelo)
+```
+
+### Texto APA automático con `report()`
+
+```{r}
+#| label: report
+# generar el resumen APA
+# TU CÓDIGO AQUÍ
+# Pista: report(modelo)
+```
+
+### Comparaciones post-hoc (Tukey HSD)
+
+```{r}
+#| label: tukey
+# comparaciones pareadas entre las 3 especies
+# TU CÓDIGO AQUÍ
+# Pista: TukeyHSD(modelo)
+```
+
+## Discusión y conclusiones
+
+Escribe aquí 2-3 frases interpretando los resultados:
+
+- ¿Son significativas las diferencias entre especies?
+- ¿Qué pares de especies difieren más?
+- ¿Cómo interpretarías estos resultados en términos biológicos?
+
+**Tu interpretación:** _TU TEXTO AQUÍ_
+
+---
+
+*Reporte generado con Quarto para el curso "Introducción a R" — CIMCYC,
+Universidad de Granada.*
