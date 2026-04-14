@@ -27,7 +27,11 @@ datos_preprocesados <- data_trial |>
     loneliness_post      = ucla_post,
     loneliness_followup  = ucla_followup
   ) |>
-  relocate(ends_with("_followup"), .after = ends_with("_post")) |>
+  relocate(anxiety_followup, .after = anxiety_post) |>
+  relocate(depression_followup, .after = depression_post) |>
+  relocate(wellbeing_followup, .after = wellbeing_post) |>
+  relocate(loneliness_followup, .after = loneliness_post) |>
+  relocate(self_esteem_followup, .after = self_esteem_post) |>
   mutate(
     mejora          = anxiety_pre - anxiety_post,
     mejora_followup = anxiety_pre - anxiety_followup,
