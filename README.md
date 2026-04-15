@@ -54,11 +54,21 @@ Cada día tiene **3 bloques** de 80 minutos con dos descansos de 20 minutos.
 
 ```
 intro_to_R/
-├── DayX_bloqueY_student.html     Presentaciones (versión estudiante, sin soluciones)
+├── README.md                     Este documento
 ├── funciones_del_curso.html      Referencia completa de funciones del curso
-├── anova_by_hand.html            ANOVA paso a paso: de Fisher a R
-├── ttest_by_hand.html            t-test paso a paso: de Student a R
 ├── buenas_practicas.html         Buenas prácticas de programación en R
+├── referencias.md                Referencias y recursos recomendados
+│
+├── slides/                        Presentaciones (versión estudiante)
+│   ├── Day1_bloque{1,2,3}_student.html
+│   ├── Day2_bloque{1,2}_student.html
+│   ├── Day3_bloque{1,2,3}_student.html
+│   ├── Day4_bloque{1,2,3}_student.html
+│   └── Day1_feedback.html
+│
+├── extra/                         Documentos de profundización
+│   ├── anova_by_hand.html        ANOVA paso a paso: de Fisher a R
+│   └── ttest_by_hand.html        t-test paso a paso: de Student a R
 │
 ├── exercises/                     Ejercicios en clase
 │   ├── exercises.Rproj           Proyecto RStudio
@@ -74,9 +84,9 @@ intro_to_R/
 │       ├── 03_day3_exercises_solutions.R
 │       ├── 03_preprocessing_pipeline.R
 │       ├── 04_day4_exercises_student.R
-│       └── 04_day4_exercises_solutions.R
+│       └── 04_day4_exercises_solutions.R   (se publica después de clase)
 │
-├── homework/                      Trabajo autónomo
+└── homework/                      Trabajo autónomo
     ├── day2_salary/              Brecha salarial de género (INE)
     ├── day3_undp/                Desarrollo humano (UNDP)
     └── day5_penguins/            Palmer penguins (visualización + reporte)
@@ -101,8 +111,8 @@ Ver `data/README.md` para la descripción completa de cada dataset y las escalas
 | Archivo | Descripción |
 |---------|-------------|
 | `funciones_del_curso.html` | Referencia completa de todas las funciones del curso, con ejemplos desde el ensayo clínico |
-| `anova_by_hand.html` | ANOVA paso a paso: de Fisher a R — la lógica del F |
-| `ttest_by_hand.html` | t-test paso a paso: de Student a R — historia, NHST, cálculos a mano |
+| `extra/anova_by_hand.html` | ANOVA paso a paso: de Fisher a R — la lógica del F |
+| `extra/ttest_by_hand.html` | t-test paso a paso: de Student a R — historia, NHST, cálculos a mano |
 | `buenas_practicas.html` | Buenas prácticas de programación en R |
 | `referencias.md` | Referencias, recursos y enlaces recomendados |
 
@@ -122,8 +132,8 @@ Ver `data/README.md` para la descripción completa de cada dataset y las escalas
 
 Los materiales se publican de forma progresiva para que los estudiantes no vean las soluciones antes de intentar los ejercicios por su cuenta:
 
-- **Antes de cada sesión:** se publican las presentaciones `_student.html` y los scripts `*_student.R`
-- **Después de cada sesión:** se publican los scripts `*_solutions.R` en la misma carpeta `exercises/scripts/`
+- **Antes de cada sesión:** se publican las presentaciones en `slides/DayX_bloqueY_student.html` y los scripts `exercises/scripts/*_student.R`
+- **Después de cada sesión:** se publican los scripts `exercises/scripts/*_solutions.R` en la misma carpeta
 
 ---
 
