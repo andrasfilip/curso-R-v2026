@@ -1,0 +1,613 @@
+---
+title: "Funciones del curso — resumen"
+subtitle: "Todas las funciones utilizadas (y por utilizar) en el curso de R"
+author:
+  - name: "Efraín García Sánchez & Filip Andras"
+    affiliations:
+      - name: "CIMCYC — Universidad de Granada"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    toc-depth: 2
+    code-fold: false
+    code-tools: true
+    embed-resources: true
+    grid:
+      body-width: 1000px
+      sidebar-width: 250px
+      margin-width: 200px
+    include-in-header:
+      - text: |
+          <style>
+            pre { white-space: pre-wrap; word-wrap: break-word; }
+            main.content { max-width: 1000px; }
+          </style>
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+# Cómo usar este documento
+
+Este documento resume **todas las funciones** que hemos usado o vamos a usar en el curso, organizadas por propósito. Guardadlo como referencia rápida.
+
+- Cada sección corresponde a una fase del análisis: importar → inspeccionar → transformar → analizar → visualizar → reportar.
+- Los ejemplos están en pseudocódigo o con el dataset `data_processed` del ensayo clínico.
+- Los bloques marcados como **Día X** indican cuándo aparecieron en el curso.
+
+---
+
+# 1. Importar datos {.unnumbered}
+
+*Día 1 · Bloque 3*
+
+```{r}
+library(tidyverse)   # incluye readr
+
+# CSV — datos crudos (originales, solo lectura)
+datos <- read_csv(file = "data/raw_data/mi_archivo.csv")
+
+# CSV — datos preprocesados (los que usamos en el Día 4)
+data_processed <- read_csv(file = "data/processed_data/preprocessed_data.csv")
+
+# Excel
+library(readxl)
+datos <- read_excel(path = "data/raw_data/mi_archivo.xlsx",
+                    sheet = "Hoja1")
+
+# RDS (formato nativo de R — preserva factores, listas, modelos)
+modelo <- read_rds(file = "output/modelo.rds")
+
+# SPSS, Stata, SAS
+library(haven)
+datos <- read_sav(file = "data/raw_data/mi_archivo.sav")
+```
+
+::: {.callout-tip}
+## `data/raw_data/` vs `data/processed_data/`
+
+- **`data/raw_data/`** — datos originales, **solo lectura**. Nunca se modifican.
+- **`data/processed_data/`** — datos limpios, tras aplicar el pipeline de preprocesamiento. Aquí vive `preprocessed_data.csv`, nuestro **punto de partida en el Día 4**.
+:::
+
+::: {.callout-note collapse="true"}
+## ¿Vas a modificar este `.qmd` y te da errores de `read_csv()`? Usa `here::here()`
+
+Las rutas relativas (`"data/processed_data/..."`) **solo funcionan** cuando tu *working directory* es la raíz del proyecto (la carpeta donde está el `.Rproj`). Pero al pulsar ▶ en un chunk de un `.qmd` que vive en una subcarpeta (p. ej. `scripts/`), el working directory cambia y la ruta deja de funcionar.
+
+**Solución:** usa `here::here()`, que busca el `.Rproj` automáticamente y construye la ruta desde ahí:
+
+```r
+library(here)   # instalar primero con install.packages("here")
+
+# funciona sin importar desde donde ejecutes el chunk
+data_processed <- read_csv(file = here("data", "processed_data", "preprocessed_data.csv"))
+```
+
+Con `here()`, el mismo código funciona al pulsar ▶, al renderizar, y al ejecutar desde la consola.
+:::
+
+---
+
+# 2. Inspeccionar datos {.unnumbered}
+
+*Día 1 · Bloque 3*
+
+```{r}
+glimpse(data_processed)           # vista vertical: cada columna en una fila
+head(data_processed, n = 5)       # primeras 5 filas
+tail(data_processed, n = 5)       # ultimas 5 filas
+summary(data_processed)           # min, Q1, mediana, media, Q3, max por columna
+str(data_processed)               # estructura: tipos y primeros valores
+names(data_processed)             # nombres de las columnas
+dim(data_processed)               # filas y columnas
+nrow(data_processed); ncol(data_processed)
+```
+
+---
+
+# 3. Vectores, secuencias y `NA` {.unnumbered}
+
+*Día 1 · Bloque 2*
+
+```{r}
+# crear vectores
+edades      <- c(25, 32, 18, 45, 28)
+grupos      <- c("CBT", "placebo", "control")
+
+# secuencias
+1:10                                    # enteros consecutivos
+seq(from = 0, to = 1, by = 0.25)        # con paso
+seq(from = 0, to = 1, length.out = 5)   # n valores equidistantes
+
+# repetir valores
+rep(x = c("A", "B"), times = 3)         # ABABAB
+rep(x = c("A", "B"), each  = 3)         # AAABBB
+
+# operaciones elemento a elemento
+edades / 10                             # divide cada elemento
+edades - mean(edades)                   # centra en la media
+
+# manejar NA
+x <- c(1, 2, NA, 4)
+is.na(x)                                # TRUE donde hay NA
+sum(is.na(x))                           # cuantos NA
+mean(x, na.rm = TRUE)                   # media ignorando NA
+
+# indexacion
+edades[1]                               # primer elemento
+edades[c(1, 3)]                         # elementos 1 y 3
+edades[-1]                              # todos menos el primero
+edades[edades > 25]                     # logica
+```
+
+---
+
+# 4. Filtrar y seleccionar {.unnumbered}
+
+*Día 2 · Bloque 1*
+
+```{r}
+# filtrar filas
+data_processed |>
+  filter(group == "CBT")                              # una condicion
+data_processed |>
+  filter(group %in% c("CBT", "pharmacological"))      # varias
+data_processed |>
+  filter(age > 40, sex == "female")                   # combinar con coma = AND
+
+# seleccionar columnas
+data_processed |>
+  select(patient_id, group, anxiety_pre, anxiety_post)
+
+data_processed |>
+  select(starts_with("anxiety"))                      # por prefijo
+data_processed |>
+  select(contains("pre"))                             # por texto
+data_processed |>
+  select(where(is.numeric))                           # por tipo
+```
+
+---
+
+# 5. Crear columnas y recodificar {.unnumbered}
+
+*Día 2 · Bloque 2*
+
+```{r}
+# crear columnas nuevas
+data_processed |>
+  mutate(mejora = anxiety_pre - anxiety_post)
+
+# if_else: 2 categorias
+data_processed |>
+  mutate(mejora_binaria = if_else(condition = anxiety_pre > anxiety_post,
+                                  true      = "mejora",
+                                  false     = "empeora"))
+
+# case_when: varias categorias
+data_processed |>
+  mutate(gravedad = case_when(
+    anxiety_post <= 4  ~ "minima",
+    anxiety_post <= 9  ~ "leve",
+    anxiety_post <= 14 ~ "moderada",
+    .default           = "grave"
+  ))
+
+# across: aplicar funcion a varias columnas
+data_processed |>
+  mutate(across(.cols = starts_with("anxiety"),
+                .fns  = ~ round(.x, digits = 1)))
+```
+
+---
+
+# 6. Combinar tablas {.unnumbered}
+
+*Día 2 · Bloque 2*
+
+```{r}
+# left_join: anade columnas de Y a X (conserva todas las filas de X)
+data_processed |>
+  left_join(y = sites, by = join_by(site_id))
+
+# inner_join: solo filas con coincidencia en ambas tablas
+# full_join: todas las filas de ambas tablas
+# anti_join: filas de X que NO tienen coincidencia en Y (util para debug)
+```
+
+---
+
+# 7. Agrupar y resumir {.unnumbered}
+
+*Día 3 · Bloque 1*
+
+```{r}
+# resumen global
+data_processed |>
+  summarise(media = mean(anxiety_post, na.rm = TRUE),
+            dt    = sd(anxiety_post, na.rm = TRUE),
+            n     = n())
+
+# resumen por grupo (clasico: group_by -> summarise)
+data_processed |>
+  group_by(group) |>
+  summarise(media = mean(anxiety_post),
+            n     = n(),
+            .groups = "drop")
+
+# resumen por grupo (moderno: .by, dplyr 1.1+)
+data_processed |>
+  summarise(media = mean(anxiety_post),
+            n     = n(),
+            .by   = group)
+
+# contar (atajo de group_by + n)
+data_processed |>
+  count(group, sex)
+```
+
+---
+
+# 8. Reestructurar datos (pivotar) {.unnumbered}
+
+*Día 3 · Bloque 2*
+
+```{r}
+# de ancho a largo (una fila por medicion)
+data_largo <- data_processed |>
+  pivot_longer(cols         = starts_with("anxiety"),
+               names_to     = "timepoint",
+               values_to    = "anxiety",
+               names_prefix = "anxiety_")
+
+# de largo a ancho
+data_largo |>
+  pivot_wider(names_from  = "timepoint",
+              values_from = "anxiety")
+```
+
+::: {.callout-important}
+## ¿Cuándo necesito el formato largo?
+- **ANOVA de medidas repetidas** o **mixto**: SÍ (formato largo obligatorio)
+- **ggplot con múltiples variables**: SÍ (una variable = una columna)
+- **Correlaciones, regresión, t-tests independientes, ANOVA una vía**: NO (formato ancho está bien)
+- **t-test pareado**: cualquiera de los dos formatos
+:::
+
+---
+
+# 9. Estadística descriptiva {.unnumbered}
+
+*Día 3 · Bloque 3*
+
+```{r}
+# basicos
+mean(data_processed$anxiety_post)
+sd(data_processed$anxiety_post)
+median(data_processed$anxiety_post)
+min(data_processed$anxiety_post)
+max(data_processed$anxiety_post)
+range(data_processed$anxiety_post)   # min + max
+IQR(data_processed$anxiety_post)     # rango intercuartilico
+quantile(data_processed$anxiety_post,
+         probs = c(0.25, 0.5, 0.75))
+
+# resumen rapido
+summary(data_processed$anxiety_post)
+
+# completo (paquete psych)
+library(psych)
+describe(data_processed$anxiety_post)     # una variable
+
+data_processed |>                         # todo el dataset
+  select(where(is.numeric)) |>
+  describe()
+
+# tabla por grupo (publicable)
+data_processed |>
+  group_by(group) |>
+  summarise(media = round(mean(anxiety_post), 2),
+            dt    = round(sd(anxiety_post),   2),
+            n     = n(),
+            .groups = "drop")
+```
+
+---
+
+# 10. Visualizar con base R {.unnumbered}
+
+*Día 1 + Día 3*
+
+```{r}
+# histograma: distribucion de una variable numerica
+hist(x    = data_processed$anxiety_post,
+     main = "Ansiedad post-tratamiento",
+     xlab = "GAD-7")
+
+# boxplot: una variable por grupo
+boxplot(formula = anxiety_post ~ group,
+        data    = data_processed,
+        ylab    = "GAD-7")
+
+# scatterplot + linea de regresion
+plot(x = data_processed$wellbeing_post,
+     y = data_processed$anxiety_post)
+abline(reg = lm(anxiety_post ~ wellbeing_post, data = data_processed),
+       col = "blue", lwd = 2)
+
+# multiples graficos en una ventana
+par(mfrow = c(1, 2))
+hist(data_processed$anxiety_pre)
+hist(data_processed$anxiety_post)
+par(mfrow = c(1, 1))     # volver al layout normal
+```
+
+---
+
+# 11. Tests estadísticos {.unnumbered}
+
+## 11.1 Comprobar supuestos
+
+*Día 3 · Bloque 3*
+
+```{r}
+# normalidad
+shapiro.test(x = data_processed$anxiety_post)
+# p > 0.05 -> compatible con normalidad -> Pearson / t-test parametrico
+# p < 0.05 -> desvio significativo     -> Spearman / test no parametrico
+
+# homogeneidad de varianzas (dos o mas grupos)
+library(car)
+leveneTest(y = anxiety_post ~ group, data = data_processed)
+```
+
+## 11.2 Correlación
+
+*Día 3 · Bloque 3*
+
+```{r}
+# Pearson (asume normalidad en ambas variables)
+cor.test(x      = data_processed$anxiety_post,
+         y      = data_processed$wellbeing_post,
+         method = "pearson")
+
+# Spearman (rangos, no parametrico)
+cor.test(x      = data_processed$anxiety_post,
+         y      = data_processed$wellbeing_post,
+         method = "spearman")
+
+# matriz de correlaciones
+library(sjPlot)
+data_processed |>
+  select(anxiety_pre, depression_pre, wellbeing_pre) |>
+  tab_corr(triangle = "lower")
+```
+
+## 11.3 t-test (3 variantes)
+
+*Día 4 · no lo practicamos, pero necesitareis saber cuando aplicar cada uno*
+
+Todos los ejemplos usan nuestro ensayo clínico (`data_processed`). Ojo: el análisis correcto del ensayo es el **ANOVA mixto** — aquí creamos **subsets** del dataset para ilustrar cuándo tiene sentido usar cada t-test.
+
+```{r}
+# === UNA MUESTRA ===
+# compara una media con un VALOR DE REFERENCIA conocido
+# (un umbral clinico, una norma poblacional, un punto de corte)
+
+# ejemplo 1: la ansiedad post del grupo CBT, ¿esta por debajo del umbral clinico?
+# umbral GAD-7 >= 10 = ansiedad moderada
+trial_cbt <- data_processed |> filter(group == "CBT")
+t.test(x = trial_cbt$anxiety_post, mu = 10, alternative = "less")
+
+# ejemplo 2: la depresion post del grupo farmacologico, ¿difiere del umbral PHQ-9 = 10?
+trial_pharma <- data_processed |> filter(group == "pharmacological")
+t.test(x = trial_pharma$depression_post, mu = 10)
+
+
+# === MUESTRAS INDEPENDIENTES ===
+# compara DOS grupos NO relacionados en UN SOLO momento
+# (Welch por defecto, mas seguro frente a varianzas desiguales)
+
+# ejemplo 1: al INICIO del ensayo, ¿CBT y pharma partian del mismo nivel? (randomization check)
+trial_2grupos <- data_processed |>
+  filter(group %in% c("CBT", "pharmacological"))
+
+t.test(formula = anxiety_pre ~ group, data = trial_2grupos)
+
+# ejemplo 2: post-tratamiento, ¿hay diferencia entre CBT y control?
+trial_cbt_ctrl <- data_processed |>
+  filter(group %in% c("CBT", "control"))
+
+t.test(formula = anxiety_post ~ group, data = trial_cbt_ctrl)
+
+# ejemplo 3: bienestar post, ¿difiere entre hombres y mujeres? (ignorando grupo)
+t.test(formula = wellbeing_post ~ sex, data = data_processed)
+
+
+# === PAREADO ===
+# MISMO sujeto medido en DOS momentos
+# (pre vs post dentro de un mismo grupo)
+
+# ejemplo 1: ¿cambia la ansiedad pre -> post en el grupo CBT?
+t.test(x      = trial_cbt$anxiety_pre,
+       y      = trial_cbt$anxiety_post,
+       paired = TRUE)
+
+# ejemplo 2: ¿cambia la depresion pre -> post en el grupo farmacologico?
+t.test(x      = trial_pharma$depression_pre,
+       y      = trial_pharma$depression_post,
+       paired = TRUE)
+
+# ejemplo 3: ¿cambia el bienestar pre -> post en el grupo control?
+trial_ctrl <- data_processed |> filter(group == "control")
+t.test(x      = trial_ctrl$wellbeing_pre,
+       y      = trial_ctrl$wellbeing_post,
+       paired = TRUE)
+
+
+# === TAMANO DEL EFECTO (Cohen's d) ===
+library(effectsize)
+
+# una muestra
+cohens_d(x = trial_cbt$anxiety_post, mu = 10)
+
+# independientes
+cohens_d(formula = anxiety_post ~ group, data = trial_cbt_ctrl)
+
+# pareado
+cohens_d(x      = trial_cbt$anxiety_pre,
+         y      = trial_cbt$anxiety_post,
+         paired = TRUE)
+```
+
+::: {.callout-tip}
+## La regla de oro para elegir t-test
+1. **¿Un único grupo vs. un valor de referencia?** → una muestra
+2. **¿Dos grupos independientes (no relacionados)?** → independientes
+3. **¿El mismo sujeto medido dos veces?** → pareado
+4. **¿Más de dos grupos o más de dos momentos?** → NO es t-test → ANOVA
+
+En nuestro ensayo, la pregunta completa (3 grupos × 3 momentos) **solo** la responde el ANOVA mixto. Los t-tests de arriba responden **sub-preguntas** específicas.
+:::
+
+## 11.4 Regresión lineal
+
+*Día 3 · Bloque 3 · Introducción*
+
+```{r}
+# regresion simple
+modelo <- lm(formula = anxiety_post ~ n_sessions, data = cbt)
+summary(modelo)
+
+# regresion multiple
+modelo2 <- lm(formula = anxiety_post ~ n_sessions + age, data = cbt)
+summary(modelo2)
+
+# comparar modelos
+anova(modelo, modelo2)
+
+# verificar supuestos
+library(performance)
+check_model(modelo)
+
+# predicciones
+predict(object = modelo,
+        newdata = data.frame(n_sessions = 12))
+```
+
+## 11.5 ANOVA
+
+*Día 4 · Bloques 2 y 3*
+
+```{r}
+# === ANOVA DE UNA VIA (one-way) ===
+# un factor entre sujetos, dataset en formato ANCHO
+modelo_uno <- aov(formula = anxiety_post ~ group, data = data_processed)
+summary(modelo_uno)
+
+# tamano del efecto (eta cuadrado parcial)
+library(effectsize)
+eta_squared(modelo_uno, partial = TRUE)
+
+# post-hoc
+library(emmeans)
+emm <- emmeans(object = modelo_uno, specs = ~ group)
+pairs(x = emm, adjust = "holm")
+
+
+# === ANOVA MIXTO (within x between) ===
+# DATOS EN FORMATO LARGO (obligatorio para factor within)
+library(afex)
+
+modelo_mixto <- aov_ez(
+  id      = "patient_id",         # identificador del sujeto
+  dv      = "anxiety",            # variable dependiente
+  data    = data_largo,           # datos en formato LARGO
+  within  = "timepoint",          # factor intra-sujeto
+  between = "group"               # factor entre-sujetos
+)
+
+modelo_mixto   # tabla F, df, p, eta cuadrado generalizado
+
+# post-hoc dentro de cada grupo
+emm <- emmeans(object = modelo_mixto, specs = ~ timepoint | group)
+pairs(x = emm, adjust = "holm")
+
+# tamano del efecto
+eta_squared(modelo_mixto, partial = TRUE)
+```
+
+::: {.callout-important}
+## ¿Por qué el ANOVA mixto SÍ necesita pivotar y el one-way NO?
+- **One-way ANOVA**: 1 variable dependiente por paciente → formato ancho funciona
+- **ANOVA mixto**: varias mediciones del mismo paciente (pre/post/followup) → cada medición necesita su propia fila → formato largo
+:::
+
+---
+
+# 12. Exportar y reportar {.unnumbered}
+
+*Día 2 · Bloque 3 + todo el curso*
+
+```{r}
+# exportar datos procesados
+write_csv(x = tabla_resumen, file = "output/tabla_resumen.csv")
+write_rds(x = modelo,        file = "output/modelo.rds")
+
+# texto APA automatico (paquete report, parte de easystats)
+library(report)
+report(x = cor.test(data_processed$anxiety_post,
+                    data_processed$wellbeing_post))
+report(x = t.test(x = data_processed$anxiety_post, mu = 10))
+report(x = lm(anxiety_post ~ n_sessions, data = cbt))
+# nota: report() todavia no soporta afex_aov — usa nice(modelo) para ANOVA mixto
+
+# tabla con kable (informes)
+library(knitr)
+kable(x = tabla_resumen, caption = "Resumen por grupo")
+
+# tabla elegante con sjPlot
+library(sjPlot)
+tab_model(modelo)
+```
+
+---
+
+# 13. Quarto — lo que viene en Día 5 {.unnumbered}
+
+*Preview · Día 5*
+
+- **YAML**: encabezado con metadatos (`title`, `format`, `embed-resources`)
+- **Chunks de código**: `` ```{r} ... ``` ``
+- **Opciones del chunk**: `#| echo: false`, `#| eval: false`, `#| fig-width: 8`
+- **Renderizar**: botón "Render" en RStudio o `quarto render archivo.qmd`
+- **Formatos**: `html`, `pdf`, `docx`, `revealjs` (slides)
+
+---
+
+# Resumen visual — flujo típico de análisis {.unnumbered}
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   1. Cargar  │────▶│  2. Limpiar  │────▶│  3. Explorar │
+│   read_csv   │     │  filter      │     │  glimpse     │
+│   read_excel │     │  mutate      │     │  summary     │
+│              │     │  join        │     │  describe    │
+└──────────────┘     └──────────────┘     └──────────────┘
+                                                  │
+                                                  ▼
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  6. Reportar │◀────│  5. Analizar │◀────│ 4. Visualizar│
+│  report      │     │  cor.test    │     │  hist        │
+│  kable       │     │  t.test      │     │  boxplot     │
+│  write_csv   │     │  lm          │     │  plot        │
+│              │     │  aov / aov_ez│     │  ggplot      │
+└──────────────┘     └──────────────┘     └──────────────┘
+```

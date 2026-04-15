@@ -4,9 +4,8 @@
 .RData
 .Rproj.user/
 
-# Solutions (publish after each session)
-# Day 1 solutions: published
-# Day 2 solutions: published (bloques 1-2)
-exercises_solutions/04_*
-exercises_solutions/05_*
+# Day 4 solutions (publish after class)
+exercises/scripts/04_day4_exercises_solutions.R
+
+# Homework solved versions
 homework/*/scripts/*_solved.R

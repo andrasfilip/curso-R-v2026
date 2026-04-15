@@ -54,20 +54,27 @@ Cada día tiene **3 bloques** de 80 minutos con dos descansos de 20 minutos.
 
 ```
 intro_to_R/
-├── DayX_bloqueY_student.qmd      Presentaciones (versión estudiante, sin soluciones)
+├── DayX_bloqueY_student.html     Presentaciones (versión estudiante, sin soluciones)
+├── funciones_del_curso.html      Referencia completa de funciones del curso
+├── anova_by_hand.html            ANOVA paso a paso: de Fisher a R
+├── ttest_by_hand.html            t-test paso a paso: de Student a R
+├── buenas_practicas.html         Buenas prácticas de programación en R
 │
 ├── exercises/                     Ejercicios en clase
-│   ├── exercises.Rproj           Proyecto RStudio (estudiantes lo crean el Día 2)
-│   ├── data/raw_data/            Datos para los ejercicios
-│   └── scripts/                  Scripts de ejercicios por día
+│   ├── exercises.Rproj           Proyecto RStudio
+│   ├── data/
+│   │   ├── raw_data/             Datos originales (solo lectura)
+│   │   └── processed_data/       Datos preprocesados (preprocessed_data.csv)
+│   └── scripts/                  Scripts de ejercicios + soluciones
 │       ├── 01_day1_exercises_student.R
+│       ├── 01_day1_exercises_solutions.R
 │       ├── 02_day2_exercises_student.R
-│       ├── ...
-│
-├── exercises_solutions/           Soluciones (se publican después de cada sesión)
-│   ├── 01_day1_exercises_solutions.R
-│   ├── 02_day2_exercises_solutions.R
-│   ├── ...
+│       ├── 02_day2_exercises_solutions.R
+│       ├── 03_day3_exercises_student.R
+│       ├── 03_day3_exercises_solutions.R
+│       ├── 03_preprocessing_pipeline.R
+│       ├── 04_day4_exercises_student.R
+│       └── 04_day4_exercises_solutions.R
 │
 ├── homework/                      Trabajo autónomo
     ├── day2_salary/              Brecha salarial de género (INE)
@@ -93,7 +100,10 @@ Ver `data/README.md` para la descripción completa de cada dataset y las escalas
 
 | Archivo | Descripción |
 |---------|-------------|
-| `anova_by_hand.qmd` | ANOVA paso a paso: de Fisher a R |
+| `funciones_del_curso.html` | Referencia completa de todas las funciones del curso, con ejemplos desde el ensayo clínico |
+| `anova_by_hand.html` | ANOVA paso a paso: de Fisher a R — la lógica del F |
+| `ttest_by_hand.html` | t-test paso a paso: de Student a R — historia, NHST, cálculos a mano |
+| `buenas_practicas.html` | Buenas prácticas de programación en R |
 | `referencias.md` | Referencias, recursos y enlaces recomendados |
 
 ---
@@ -112,8 +122,8 @@ Ver `data/README.md` para la descripción completa de cada dataset y las escalas
 
 Los materiales se publican de forma progresiva para que los estudiantes no vean las soluciones antes de intentar los ejercicios por su cuenta:
 
-- **Antes de cada sesión:** se publican las presentaciones `_student` y los scripts de ejercicios
-- **Después de cada sesión:** se publican las soluciones en `exercises_solutions/`
+- **Antes de cada sesión:** se publican las presentaciones `_student.html` y los scripts `*_student.R`
+- **Después de cada sesión:** se publican los scripts `*_solutions.R` en la misma carpeta `exercises/scripts/`
 
 ---
 
