@@ -1,0 +1,555 @@
+---
+title: "Buenas prácticas en R"
+subtitle: "Curso: Introducción a programación y análisis de datos en R"
+author:
+  - name: "Filip Andras & Efrain Garcia Sanchez"
+    affiliations:
+      - name: "CIMCYC — Universidad de Granada"
+date: "2026-04-16"
+date-format: "D MMMM YYYY"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-location: left
+    number-sections: true
+    number-depth: 2
+    code-fold: false
+    embed-resources: true
+    page-layout: full
+    include-in-header:
+      - text: '<style>body { font-size: 14.5px; } pre { white-space: pre-wrap; word-wrap: break-word; font-size: 13px; } code { font-size: 0.9em; } .quarto-title-block, #quarto-content { max-width: 1100px; margin: auto; } #TOC { max-width: 220px; font-size: 13px; }</style>'
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+# ¿Por qué buenas prácticas?
+
+Imagina que vuelves a un análisis **6 meses después**, o que un/una revisor/a te pide
+que modifiques una figura, o que un/una colaborador/a quiere replicar tu análisis en su
+ordenador. Si tu código no está bien organizado, vas a perder horas (o días)
+intentando entender qué hiciste.
+
+Entiende esta guía como una inversión en tu **yo del futuro**:
+
+- **Reproducibilidad** — cualquiera puede repetir tu análisis y obtener los mismos resultados
+- **Transparencia** — cada paso queda documentado en el código
+- **Portabilidad** — tu proyecto funciona en cualquier ordenador
+- **Colaboración** — otras personas pueden entender y contribuir a tu trabajo
+
+::: {.callout-tip}
+## Open Science
+Un proyecto bien organizado se puede subir tal cual a [**OSF**](https://osf.io/)
+(Open Science Framework) o a un repositorio de Zenodo/GitHub. La estructura de
+carpetas, el README, los scripts comentados y los datos en `raw_data/`
+forman un paquete completo que cumple con los estándares de ciencia abierta.
+:::
+
+# Organización de proyectos
+
+## Un proyecto = una carpeta
+
+Cada estudio, artículo o proyecto debería tener su propia carpeta con una estructura consistente:
+
+```
+mi_proyecto/
+├── mi_proyecto.Rproj     <-- Proyecto RStudio (fija el directorio de trabajo)
+├── README.txt            <-- Descripcion del proyecto, variables, instrucciones
+├── data/
+│   ├── raw_data/         <-- Datos originales (NUNCA modificar)
+│   └── processed_data/   <-- Datos limpios/transformados (generados por scripts)
+├── scripts/              <-- Scripts de R numerados (01_preprocessing.R, 02_analysis.R...)
+├── output/               <-- Tablas, figuras y resultados exportados
+├── docs/                 <-- Documentacion adicional (protocolos, pre-registros, manuales)
+└── archive/              <-- Versiones antiguas de scripts o datos (por si acaso)
+```
+
+**¿Qué editas tú y qué se genera solo?** Tú editas directamente `README.txt`, los `scripts/`, y la documentación en `docs/`. El contenido de `data/processed_data/` y de `output/` se genera al ejecutar tus scripts. Los datos en `data/raw_data/` son **solo lectura** — nunca se tocan.
+
+## Usar `.Rproj`
+
+- Crea un proyecto RStudio: **File > New Project > Existing Directory**
+- El `.Rproj` fija el **directorio de trabajo** automáticamente
+- Permite usar **rutas relativas** (portabilidad entre ordenadores)
+- **Nunca** abras un script directamente — siempre abre el `.Rproj`
+
+```r
+# MAL: ruta absoluta (solo funciona en tu ordenador)
+read_csv("/Users/Filip/Desktop/mi_proyecto/data/raw_data/datos.csv")
+
+# BIEN: ruta relativa (funciona en cualquier ordenador)
+read_csv("data/raw_data/datos.csv")
+```
+
+## No toques los datos raw
+
+Los archivos en `data/raw_data/` son de **solo lectura**. Si necesitas limpiar o transformar datos, guarda el resultado en `data/processed_data/`.
+
+Así siempre puedes volver al punto de partida.
+
+# Estructura de un script
+
+## Encabezado
+
+Todo script debería empezar con:
+
+```r
+# ============================================================
+# Titulo del script
+# Proyecto: nombre del proyecto
+# Autor: tu nombre
+# Fecha: 2026-04-16
+# ============================================================
+```
+
+::: {.callout-warning collapse="true"}
+## ¿Revisión por pares anonimizada?
+
+Si vas a compartir el script en una **revisión por pares anonimizada**, **quita el nombre del autor y cualquier dato identificable** antes de subirlo (junto con cualquier mención de afiliación, correo, agradecimientos, IDs de OSF vinculados a tu cuenta, etc.).
+
+Una buena costumbre es tener **dos versiones** del encabezado:
+
+- **Versión de trabajo** con autoría completa (en tu copia local)
+- **Versión anonimizada** para el manuscrito enviado: `# Autor: [anonimizado para revisión]`
+
+Después de la aceptación, repones la autoría en la versión final publicable.
+:::
+
+
+## Instalar paquetes solo una vez
+
+```r
+# ejecutar UNA VEZ, luego comentar
+# install.packages("tidyverse")
+# install.packages("afex")
+# install.packages("emmeans")
+```
+
+Nunca dejes `install.packages()` sin comentar en un script compartido — se ejecutaría cada vez que alguien ejecuta el script.
+
+## Cargar paquetes al principio
+
+Carga **todos** los paquetes al inicio del script, nunca a mitad del código:
+
+```r
+# --- paquetes ---
+library(tidyverse)
+library(afex)
+library(emmeans)
+library(effectsize)
+library(report)
+```
+
+Para paquetes que usas una sola vez, usa `paquete::funcion()`:
+
+```r
+# no hace falta cargar todo el paquete
+sjPlot::tab_corr(datos)
+performance::check_model(modelo)
+```
+
+## Bonus: instalar y cargar en un solo paso
+
+Si quieres que tu script **se autogestione** —instalando automáticamente los paquetes que le falten a quien lo ejecuta—, puedes usar `if (!require())`. Esto es útil para scripts que vayas a compartir y que quieres que "simplemente funcionen".
+
+Para un solo paquete:
+
+```r
+if (!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+```
+
+Para varios paquetes a la vez, puedes usar `c()` con un bucle que recorre el vector:
+
+```r
+# paquetes que tu script necesita
+packages <- c("tidyverse", "afex", "emmeans", "effectsize", "report")
+
+# instalar los que falten y cargar todos
+for (pkg in packages) {
+  if (!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    library(pkg, character.only = TRUE)
+  }
+}
+```
+
+El argumento `character.only = TRUE` es necesario porque `library()` y `require()` esperan el nombre del paquete **sin comillas** por defecto. Con `character.only = TRUE` les decimos: "el nombre viene en una variable de texto".
+
+::: {.callout-tip collapse="true"}
+## Alternativa con `pacman`
+
+El paquete `pacman` simplifica mucho este patrón. Con `p_load()` carga los paquetes e instala los que falten automáticamente:
+
+```r
+# install.packages("pacman")  # solo la primera vez
+pacman::p_load(tidyverse, afex, emmeans, effectsize, report)
+```
+
+Una sola línea, sin `character.only = TRUE`, sin bucle. Recomendable si ya tienes `pacman` instalado.
+:::
+
+## Opciones globales
+
+```r
+# --- opciones ---
+options(scipen = 999)    # sin notacion cientifica
+options(width  = 120)    # anchura de consola (evita truncar tablas)
+```
+
+## Cargar datos
+
+```r
+# --- cargar datos ---
+data_trial    <- read_csv("data/raw_data/data_clinical_trial.csv")
+data_followup <- read_csv("data/raw_data/data_clinical_trial_followup.csv")
+sites         <- read_csv("data/raw_data/data_sites.csv")
+```
+
+## sessionInfo() al final
+
+Incluye `sessionInfo()` al final de cada script. Registra la versión de R, los paquetes cargados y el sistema operativo — esencial para reproducibilidad.
+
+```r
+# --- al final del script ---
+sessionInfo()
+```
+
+# Convenciones de código
+
+Las convenciones que siguen están basadas en la [**tidyverse style guide**](https://style.tidyverse.org/) (Hadley Wickham), el estándar de facto en la comunidad R. Si tienes alguna duda sobre estilo que no cubre esta guía, es el primer sitio al que consultar.
+
+## Nombres de variables: `snake_case`
+
+```r
+# BIEN: snake_case (palabras separadas por guion bajo)
+anxiety_pre
+media_por_grupo
+datos_preprocesados
+
+# MAL: otros estilos
+anxietyPre         # camelCase
+MediaPorGrupo      # PascalCase
+anxiety.pre        # puntos (confuso con metodos S3)
+anxiety-pre        # guiones (no es un nombre valido en R)
+```
+
+## Nombres descriptivos
+
+```r
+# BIEN: nombres que explican que contiene el objeto
+datos_preprocesados <- data_trial |> ...
+resumen_por_grupo   <- data_trial |> group_by(group) |> ...
+modelo_simple       <- lm(anxiety_post ~ n_sessions, data = cbt)
+
+# MAL: nombres crípticos
+d  <- data_trial |> ...
+x  <- data_trial |> group_by(group) |> ...
+m1 <- lm(anxiety_post ~ n_sessions, data = cbt)
+```
+
+## El uso de inglés
+
+Aunque trabajes en español, **escribe el código en inglés**: nombres de objetos, variables, columnas, funciones y archivos.
+
+```r
+# BIEN: codigo en ingles, comentarios en espanol
+data_trial <- read_csv("data/raw_data/clinical_trial.csv")
+
+# filtrar solo los pacientes del grupo CBT
+cbt_group <- data_trial |>
+  filter(group == "CBT")
+
+mean_anxiety_post <- cbt_group |>
+  summarise(mean = mean(anxiety_post))
+
+
+# MAL: codigo con acentos y mezcla de idiomas
+ensayo_clínico <- read_csv("datos/datos_brutos/ensayo_clínico.csv")
+
+grupo_TCC <- ensayo_clínico |>
+  filter(grupo == "TCC")
+
+media_ansiedad_después <- grupo_TCC |>
+  summarise(media = mean(ansiedad_después))
+```
+
+::: {.callout-tip}
+## ¿Por qué inglés?
+- **Inglés es el lenguaje universal de la ciencia** si compartes código con un/una revisor/a, un/una colaborador/a extranjero/a, o lo subes a GitHub, cualquiera lo entiende.
+- **Sin caracteres problemáticos**: el inglés no tiene acentos ni `ñ`, así evitas los problemas de codificación.
+:::
+
+## Asignar resultados a objetos
+
+Siempre guarda el resultado de un pipeline en un objeto con nombre descriptivo:
+
+```r
+# BIEN: se guarda y se puede reutilizar
+resultado <- data_trial |>
+  filter(group == "CBT") |>
+  summarise(media = mean(anxiety_post))
+resultado
+
+# MAL: el resultado se muestra en consola y se pierde
+data_trial |>
+  filter(group == "CBT") |>
+  summarise(media = mean(anxiety_post))
+```
+
+## Comentar el código
+
+Los comentarios explican el **porqué**, no el **qué**:
+
+```r
+# BIEN: explica la razon
+# excluir control porque no recibio tratamiento
+datos_tratamiento <- data_trial |>
+  filter(group != "control")
+
+# MAL: repite lo que ya dice el codigo
+# filtrar datos
+datos_tratamiento <- data_trial |>
+  filter(group != "control")
+```
+
+## Espaciado y legibilidad
+
+```r
+# BIEN: espacios alrededor de operadores y despues de comas
+media <- mean(x, na.rm = TRUE)
+datos |> filter(age > 40, group == "CBT")
+
+# MAL: sin espacios
+media<-mean(x,na.rm=TRUE)
+datos|>filter(age>40,group=="CBT")
+```
+
+## Argumentos con nombre
+
+En funciones con muchos argumentos, usa nombres explícitos:
+
+```r
+# BIEN: claro que hace cada argumento
+cor.test(x = data$anxiety_post,
+         y = data$wellbeing_post,
+         method = "pearson")
+
+# MENOS CLARO: depende del orden
+cor.test(data$anxiety_post, data$wellbeing_post, "pearson")
+```
+
+## Pipe nativo `|>`
+
+Usa el pipe nativo de R (`|>`) en vez del pipe de magrittr (`%>%`):
+
+```r
+# BIEN: pipe nativo (R 4.1+)
+data_trial |>
+  filter(group == "CBT") |>
+  summarise(media = mean(anxiety_post))
+
+# EVITAR: pipe de magrittr (legacy)
+data_trial %>%
+  filter(group == "CBT") %>%
+  summarise(media = mean(anxiety_post))
+```
+
+Para habilitar el atajo `Cmd/Ctrl + Shift + M`:
+**Tools > Global Options > Code > Use native pipe operator**
+
+## `select()` en varias líneas
+
+Cuando seleccionas muchas columnas, pon cada una en su propia línea:
+
+```r
+# BIEN: legible
+datos <- data_trial |>
+  select(patient_id,
+         group,
+         anxiety_pre,
+         anxiety_post,
+         depression_pre)
+
+# MENOS LEGIBLE: todo en una linea
+datos <- data_trial |> select(patient_id, group, anxiety_pre, anxiety_post, depression_pre)
+```
+
+# Empezar con el environment limpio
+
+Cuando trabajas durante horas en R, el *environment* (el panel superior derecho de RStudio) acumula objetos: dataframes viejos, variables de pruebas, modelos a medio hacer. **Tu código puede estar funcionando por casualidad, apoyándose en objetos que ya no están en tu script.**
+
+Tu script debe poder ejecutarse **desde cero, en una sesión limpia de R, de arriba a abajo, sin errores**. Si necesita objetos creados "a mano" en la consola, está roto.
+
+::: {.callout-tip collapse="true"}
+## Desactiva el "guardar workspace al salir"
+
+Por defecto, RStudio guarda el environment entre sesiones (archivo `.RData`). Esto perpetúa el problema: abres RStudio al día siguiente y los objetos viejos siguen ahí.
+
+**Desactívalo**: *Tools → Global Options → General → Workspace*:
+
+- **Restore .RData into workspace at startup**: *No*
+- **Save workspace to .RData on exit**: *Never*
+
+Al reiniciar la sesión de R, partes siempre de cero. Tu script es la **única fuente de verdad** de tu análisis.
+:::
+
+## Reiniciar la sesión de R
+
+La manera robusta de empezar con una sesión limpia es **reiniciar la sesión de R** por completo:
+
+- **Atajo de RStudio**: `Ctrl + Shift + F10` (Windows/Linux) o `Cmd + Shift + F10` (Mac)
+- **Menú**: **Session → Restart R**
+- **Efecto**: R vuelve al estado de recién abierto — sin objetos, sin paquetes, sin opciones cambiadas
+
+Después del reinicio, ejecutas tu script de arriba a abajo. Si funciona, tu análisis es reproducible. Si falla, has encontrado exactamente la línea que faltaba.
+
+
+## `rm(list = ls())` — insuficiente
+
+El comando `rm(list = ls())` **borra los objetos** del environment, pero deja cargados:
+
+- Los **paquetes** (`library(tidyverse)` sigue activo)
+- Los cambios en **opciones globales** (`options(scipen = 999)`)
+- Los **dispositivos gráficos** abiertos
+- Funciones modificadas manualmente
+
+::: {.callout-warning}
+## Evita `rm(list = ls())` en scripts compartidos
+
+Si pones esa línea al principio de un script y alguien (un/una colaborador/a, tu yo del futuro) ejecuta tu código, **le borras todos los objetos de su environment sin avisar**. Puede perder trabajo importante.
+
+El script describe **el análisis**. El environment limpio es **responsabilidad de quien ejecuta el script**, antes de darle al Run.
+:::
+
+## ¿Y el icono de la escoba?
+
+El icono de la escoba en el panel *Environment* **solo borra los objetos** — equivalente a `rm(list = ls())`. No reinicia los paquetes ni las opciones. Úsalo si quieres limpiar objetos rápidamente durante una sesión exploratoria, pero **para reproducibilidad real, reinicia la sesión de R**.
+
+
+# Documentos reproducibles con Quarto / R Markdown
+
+Un archivo **Quarto** (`.qmd`) o **R Markdown** (`.Rmd`) combina en un solo documento:
+
+- **Texto** en Markdown (prosa, títulos, tablas, referencias)
+- **Chunks de código R** que se ejecutan al renderizar
+- **Resultados** de ese código: tablas, gráficos, output de modelos
+
+Al renderizar el documento, R ejecuta todos los chunks en orden y genera un archivo HTML, PDF o Word con texto + código + resultados integrados. Es la forma estándar de producir **análisis reproducibles** en R.
+
+::: {.callout-note collapse="true"}
+## `.qmd` vs `.Rmd`: usa Quarto
+
+**R Markdown** (`.Rmd`) fue el estándar durante años, pero ha sido sustituido por **Quarto** (`.qmd`), que es su **sucesor moderno** desarrollado por el mismo equipo (Posit, antes RStudio).
+
+- **Quarto** soporta más lenguajes (R, Python, Julia, Observable), tiene mejor documentación, y es donde van todas las mejoras nuevas.
+- **R Markdown** sigue funcionando, pero ya no recibe desarrollo activo.
+
+**Para proyectos nuevos, usa `.qmd`**. Si heredas un `.Rmd` antiguo, lo normal es mantenerlo — la sintaxis es prácticamente idéntica, así que transicionar es trivial si hace falta.
+:::
+
+::: {.callout-tip}
+## Flujo típico: `.R` para preprocesar, `.qmd` para analizar
+
+No todo tiene que ser un `.qmd`. Una división que funciona bien en la práctica:
+
+- **Scripts `.R`** (`scripts/01_preprocessing.R`) — para las tareas pesadas: cargar datos, limpiar, unir, guardar un `preprocessed_data.csv`. Se ejecutan pocas veces, no necesitan mostrar resultados formateados.
+- **`.qmd`** para el **análisis final** (`scripts/02_analysis.qmd`) — ahí cargas el `preprocessed_data.csv` y haces descriptivos, modelos, gráficos, interpretación. Renderizable, compartible, con prosa y resultados integrados.
+
+Así mantienes **separados** los datos crudos del análisis reproducible — y puedes compartir el HTML renderizado del `.qmd` sin tener que arrastrar todo el preprocesamiento.
+:::
+
+## Cómo renderizar en RStudio
+
+Cuando abres un archivo `.qmd` o `.Rmd` en RStudio, aparece en la barra de herramientas un botón:
+
+- **`.Rmd`** → botón **Knit** con el icono del **ovillo de lana** (azul)
+- **`.qmd`** → botón **Render** con una **flecha azul**
+
+Al pinchar ese botón (o con `Cmd/Ctrl + Shift + K`), RStudio:
+
+1. Ejecuta todos los chunks del documento, de arriba a abajo, en una sesión limpia.
+2. Captura los resultados: tablas, gráficos, output de consola.
+3. Genera un archivo HTML (o PDF, o Word) con todo combinado.
+
+## Estructura básica
+
+Un `.qmd` tiene tres partes:
+
+- **YAML** (encabezado con metadatos: título, autor, formato de salida, opciones globales)
+- **Texto Markdown** (prosa + títulos `#`, listas, tablas, enlaces)
+- **Chunks de R** entre tres acentos graves y `{r}`, cada uno con su bloque de código
+
+::: {.callout-note}
+## HTML autocontenido
+
+En el YAML, añade **`embed-resources: true`** (Quarto) o **`self-contained: true`** (R Markdown): así el HTML se empaqueta en **un solo archivo**, sin carpeta adicional que se pueda perder al enviarlo por email o subirlo a OSF.
+
+Plantillas listas en `extra/analisis_completo_dia4.qmd` y `extra/analisis_completo_dia4_minimal.qmd` de este curso ([ver en GitHub](https://github.com/CIMCYC/curso-R-v2026/tree/master/extra)).
+:::
+
+## Una aplicación útil: compartir resultados cuando no puedes compartir los datos
+
+A veces trabajas con datos que **no puedes publicar**: datos clínicos, datos de menores, datos protegidos por ética o convenios con instituciones. En esas situaciones, la solución clásica de "sube los datos y el script a OSF o GitHub" no funciona.
+
+::: {.callout-tip}
+## La alternativa: comparte el documento renderizado
+
+Renderiza tu análisis como `.qmd` o `.Rmd` y comparte **el HTML resultante**. Ese archivo incluye:
+
+- Tu **código** (visible y copiable)
+- Los **resultados** de ejecutarlo sobre tus datos reales
+- Tus **interpretaciones**
+
+El/la revisor/a ve **lo que hizo tu análisis**, sin que tú compartas los datos originales. Mantienes confidencialidad y reproducibilidad al mismo tiempo.
+:::
+
+# Checklist de buenas prácticas
+
+Una lista resumen para repasar antes de guardar, compartir o publicar tu análisis. Si puedes marcar todo: abre el `.Rproj`, reinicia la sesión de R, ejecuta tu script desde el principio y estás listo para compartir.
+
+## Organización del proyecto
+
+- [ ] Todo el análisis vive en **una carpeta** con su propio `.Rproj`
+- [ ] Existe un `README.txt` con descripción del proyecto, variables e instrucciones
+- [ ] Datos originales en `data/raw_data/`, **nunca modificados**
+- [ ] Datos limpios en `data/processed_data/` (generados por scripts)
+- [ ] Scripts numerados por orden de ejecución (`01_preprocessing.R`, `02_analysis.qmd`...)
+- [ ] Todas las rutas en el código son **relativas**, no absolutas
+
+## Scripts
+
+- [ ] Encabezado con título, autor, fecha, proyecto
+- [ ] `install.packages()` comentado (o con `if (!require())`)
+- [ ] Todos los `library()` al principio del script
+- [ ] `options(scipen = 999, width = 120)` al principio (si procede)
+- [ ] Todos los datos se cargan al principio
+- [ ] `sessionInfo()` al final del script
+
+## Estilo de código
+
+- [ ] Nombres de objetos y variables en `snake_case` **y en inglés**
+- [ ] Nombres descriptivos, no crípticos (`modelo_simple`, no `m1`)
+- [ ] Sin acentos ni `ñ` en el código (comentarios sí pueden tenerlos)
+- [ ] Argumentos con nombre en funciones complejas (`cor.test(x = ..., y = ..., method = ...)`)
+- [ ] Pipe nativo `|>` (no `%>%`)
+- [ ] Resultados de pipelines asignados a objetos con nombre
+- [ ] Comentarios explican el **porqué**, no el **qué**
+
+## Reproducibilidad
+
+- [ ] El script funciona **desde cero** tras `Cmd/Ctrl + Shift + F10` (reiniciar sesión de R)
+- [ ] No hay `rm(list = ls())` al principio del script
+- [ ] Desactivado "Save workspace on exit" en RStudio Global Options
+- [ ] Si usas Quarto/RMarkdown: `embed-resources: true` en el YAML para HTML autocontenido
+- [ ] Si no puedes compartir los datos: compartes el `.html` renderizado con resultados visibles
+
+## Antes de publicar (OSF, Zenodo, GitHub)
+
+- [ ] Datos personales o identificables **no** están en el repositorio público
+- [ ] `README.txt` actualizado con las últimas versiones de los archivos
+- [ ] El HTML renderizado corre sin errores en una sesión limpia
+- [ ] Licencia clara (MIT, CC-BY, etc.) si es un proyecto público
